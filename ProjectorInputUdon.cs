@@ -19,7 +19,4 @@ public class ProjectorInputUdon : UdonSharpBehaviour
         material.SetVector("_ProjectorPos", projectorPos);
         this.enabled = false;
     }
-    private void OnDrawGizmos()
-    {
-    }
 }

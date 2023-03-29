@@ -42,7 +42,7 @@ public class ProjectorInput : MonoBehaviour
         material.SetVector("_ProjectorPos", projectorPos);
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         var gizmosMatrix = Gizmos.matrix;
         Gizmos.matrix = Matrix4x4.TRS(transform.position, transform.rotation, Vector3.one);

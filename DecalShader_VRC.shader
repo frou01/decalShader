@@ -175,7 +175,6 @@
                 o.projectorSpacePos = ComputeNonStereoScreenPos(o.projectorSpacePos);
                 o.localNormal = v.normal;
                 o.localPos = v.vertex;
-                o.tex.xy = o.projectorSpacePos.xy;
                 
                 return o;
             }
@@ -193,6 +192,8 @@
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
                 
+                i.projectorSpacePos *= _MainTex_ST;
+                i.projectorSpacePos.xy += _MainTex_ST.zw;
                 i.tex = i.projectorSpacePos;
 				FRAGMENT_SETUP(s)
                 
@@ -345,6 +346,8 @@
                 clip(isOut.x * isOut.y * isOut.z - 1);
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
+                i.projectorSpacePos *= _MainTex_ST;
+                i.projectorSpacePos.xy += _MainTex_ST.zw;
                 i.tex.xy = i.projectorSpacePos.xy;
 
                 UNITY_APPLY_DITHER_CROSSFADE(i.pos.xy);
@@ -473,6 +476,8 @@
                     float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                     clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
                     i.tex.xy = i.projectorSpacePos.xy;
+                    i.tex.xy *= _MainTex_ST;
+                    i.tex.xy += _MainTex_ST.zw;
                     float4 projectorTex = tex2D(_MainTex, i.tex.xy);
                     clip(projectorTex.a - _Cutoff);
                     #if defined(_PARALLAXMAP) && (SHADER_TARGET >= 30)
@@ -609,10 +614,12 @@
                 clip(isOut.x * isOut.y * isOut.z - 1);
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
+                i.projectorSpacePos *= _MainTex_ST;
+                i.projectorSpacePos.xy += _MainTex_ST.zw;
                 float4 projectorTex = tex2D(_MainTex, i.projectorSpacePos.xy);
                 float alpha = projectorTex.a * step(-dot(lerp(-_ProjectorPos.xyz, _ProjectorPos.xyz - i.localPos, _ProjectorPos.w), i.localNormal), 0);
 
-                clip(projectorTex - _Cutoff);
+                clip(projectorTex.a - _Cutoff);
             }
 
             half4 fragSceneHighlightPass(VertexOutput i) : SV_Target
@@ -742,10 +749,12 @@
                 clip(isOut.x * isOut.y * isOut.z - 1);
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
+                i.projectorSpacePos *= _MainTex_ST;
+                i.projectorSpacePos.xy += _MainTex_ST.zw;
                 float4 projectorTex = tex2D(_MainTex, i.projectorSpacePos.xy);
                 float alpha = projectorTex.a * step(-dot(lerp(-_ProjectorPos.xyz, _ProjectorPos.xyz - i.localPos, _ProjectorPos.w), i.localNormal), 0);
 
-                clip(projectorTex - _Cutoff);
+                clip(projectorTex.a - _Cutoff);
             }
 
             half4 fragSceneHighlightPass(VertexOutput i) : SV_Target
@@ -913,6 +922,8 @@
                 clip(isOut.x * isOut.y * isOut.z - 1);
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
+                i.projectorSpacePos *= _MainTex_ST;
+                i.projectorSpacePos.xy += _MainTex_ST.zw;
                 i.tex.xy = i.projectorSpacePos.xy;
 
                 FRAGMENT_SETUP(s)
@@ -1045,6 +1056,8 @@
                 clip(isOut.x * isOut.y * isOut.z - 1);
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
+                i.projectorSpacePos *= _MainTex_ST;
+                i.projectorSpacePos.xy += _MainTex_ST.zw;
                 i.uv.xy = i.projectorSpacePos.xy;
 
             #ifdef EDITOR_VISUALIZATION
