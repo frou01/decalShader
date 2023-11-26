@@ -16,6 +16,9 @@ public class ProjectorInput : MonoBehaviour
     [SerializeField]
     private float _orthographicSize = 1.0f;
 
+    [SerializeField]
+    public bool GPUInstancing = true;
+
     [SerializeField] public Material material;
 
     [System.NonSerialized] public Matrix4x4 viewMatrix;
@@ -52,11 +55,11 @@ public class ProjectorInput : MonoBehaviour
             var orthographicWidth = _orthographicSize * _aspect;
             var length = _farClipPlane - _nearClipPlane;
             var start = _nearClipPlane + length / 2;
-            Gizmos.DrawWireCube(Vector3.forward * start, new Vector3(orthographicWidth * 2, _orthographicSize * 2, length));
+            Gizmos.DrawWireCube(Vector3.forward * start * transform.lossyScale.z, new Vector3(orthographicWidth * 2 * transform.lossyScale.x, _orthographicSize * 2 * transform.lossyScale.y, length * transform.lossyScale.z));
         }
         else
         {
-            Gizmos.DrawFrustum(Vector3.zero, _fieldOfView, _farClipPlane, _nearClipPlane, _aspect);
+            Gizmos.DrawFrustum(Vector3.zero, _fieldOfView, _farClipPlane * transform.lossyScale.z, _nearClipPlane * transform.lossyScale.z, _aspect * transform.lossyScale.x / transform.lossyScale.y);
         }
 
         Gizmos.matrix = gizmosMatrix;

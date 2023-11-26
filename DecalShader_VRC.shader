@@ -3,7 +3,8 @@
     Properties
     {
         _Color("Color", Color) = (1,1,1,1)
-        _MainTex("Albedo", 2D) = "white" {}
+        [NoScaleOffset]_MainTex("Albedo", 2D) = "white" {}
+        _InstancedMainScaleOffset ("Scale (XY) Offset (ZW)", Vector) = (1,1,0,0)
 
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
@@ -36,8 +37,6 @@
         [Normal] _DetailNormalMap("Normal Map", 2D) = "bump" {}
 
         [Enum(UV0,0,UV1,1)] _UVSec ("UV Set for secondary textures", Float) = 0
-
-
         // Blending state
         [HideInInspector] _Mode ("__mode", Float) = 0.0
         [HideInInspector] _SrcBlend ("__src", Float) = 1.0
@@ -96,6 +95,7 @@
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4x4, _ProjectorMatrixVP)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _ProjectorPos)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _InstancedMainScaleOffset)
             UNITY_INSTANCING_BUFFER_END(Props)
 
             struct v2f
@@ -192,8 +192,8 @@
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
                 
-                i.projectorSpacePos *= _MainTex_ST;
-                i.projectorSpacePos.xy += _MainTex_ST.zw;
+                float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
+                i.projectorSpacePos.xy = i.projectorSpacePos.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                 i.tex = i.projectorSpacePos;
 				FRAGMENT_SETUP(s)
                 
@@ -267,6 +267,7 @@
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4x4, _ProjectorMatrixVP)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _ProjectorPos)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _InstancedMainScaleOffset)
             UNITY_INSTANCING_BUFFER_END(Props)
             struct VertexOutputForwardAdd_C
             {
@@ -346,8 +347,8 @@
                 clip(isOut.x * isOut.y * isOut.z - 1);
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
-                i.projectorSpacePos *= _MainTex_ST;
-                i.projectorSpacePos.xy += _MainTex_ST.zw;
+                float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
+                i.projectorSpacePos.xy = i.projectorSpacePos.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                 i.tex.xy = i.projectorSpacePos.xy;
 
                 UNITY_APPLY_DITHER_CROSSFADE(i.pos.xy);
@@ -402,6 +403,7 @@
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4x4, _ProjectorMatrixVP)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _ProjectorPos)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _InstancedMainScaleOffset)
             UNITY_INSTANCING_BUFFER_END(Props)
             //#ifdef UNITY_STANDARD_USE_SHADOW_OUTPUT_STRUCT
             struct VertexOutputShadowCaster_custom
@@ -445,7 +447,9 @@
                 #endif
                 TRANSFER_SHADOW_CASTER_NOPOS(o,opos)
                 //#if defined(UNITY_STANDARD_USE_SHADOW_UVS)
-                    o.tex = TRANSFORM_TEX(v.uv0, _MainTex);
+                    float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
+                    o.tex.xy *= _MainScaleOffset.xy;
+                    o.tex.xy += _MainScaleOffset.zw;
 
                     #ifdef _PARALLAXMAP
                         TANGENT_SPACE_ROTATION;
@@ -476,8 +480,9 @@
                     float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                     clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
                     i.tex.xy = i.projectorSpacePos.xy;
-                    i.tex.xy *= _MainTex_ST;
-                    i.tex.xy += _MainTex_ST.zw;
+                    float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
+                    i.tex.xy *= _MainScaleOffset.xy;
+                    i.tex.xy += _MainScaleOffset.zw;
                     float4 projectorTex = tex2D(_MainTex, i.tex.xy);
                     clip(projectorTex.a - _Cutoff);
                     #if defined(_PARALLAXMAP) && (SHADER_TARGET >= 30)
@@ -539,7 +544,6 @@
 
             half        _Cutoff;
             sampler2D   _MainTex;
-            float4      _MainTex_ST;
 
             float _ObjectId;
             float _PassValue;
@@ -550,6 +554,7 @@
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4x4, _ProjectorMatrixVP)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _ProjectorPos)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _InstancedMainScaleOffset)
             UNITY_INSTANCING_BUFFER_END(Props)
 
             struct VertexInput
@@ -593,11 +598,12 @@
                         o.texcoord2AndBlend.z = v.texcoordBlend;
                     #endif
                 #else
+                    float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
                     #ifdef UNITY_PARTICLE_INSTANCING_ENABLED
                         vertInstancingUVs(v.texcoords.xy, o.texcoord);
-                        o.texcoord = TRANSFORM_TEX(o.texcoord, _MainTex);
+                        o.texcoord.xy = o.texcoord.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                     #else
-                        o.texcoord = TRANSFORM_TEX(v.texcoords.xy, _MainTex);
+                        o.texcoord.xy = v.texcoords.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                     #endif
                 #endif
                 o.color = v.color;
@@ -614,8 +620,8 @@
                 clip(isOut.x * isOut.y * isOut.z - 1);
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
-                i.projectorSpacePos *= _MainTex_ST;
-                i.projectorSpacePos.xy += _MainTex_ST.zw;
+                float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
+                i.projectorSpacePos.xy = i.projectorSpacePos.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                 float4 projectorTex = tex2D(_MainTex, i.projectorSpacePos.xy);
                 float alpha = projectorTex.a * step(-dot(lerp(-_ProjectorPos.xyz, _ProjectorPos.xyz - i.localPos, _ProjectorPos.w), i.localNormal), 0);
 
@@ -675,7 +681,6 @@
 
             half        _Cutoff;
             sampler2D   _MainTex;
-            float4      _MainTex_ST;
 
             float _ObjectId;
             float _PassValue;
@@ -685,6 +690,7 @@
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4x4, _ProjectorMatrixVP)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _ProjectorPos)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _InstancedMainScaleOffset)
             UNITY_INSTANCING_BUFFER_END(Props)
 
             struct VertexInput
@@ -728,11 +734,12 @@
                         o.texcoord2AndBlend.z = v.texcoordBlend;
                     #endif
                 #else
+                    float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
                     #ifdef UNITY_PARTICLE_INSTANCING_ENABLED
                         vertInstancingUVs(v.texcoords.xy, o.texcoord);
-                        o.texcoord = TRANSFORM_TEX(o.texcoord, _MainTex);
+                        o.texcoord.xy = o.texcoord.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                     #else
-                        o.texcoord = TRANSFORM_TEX(v.texcoords.xy, _MainTex);
+                        o.texcoord.xy = v.texcoords.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                     #endif
                 #endif
                 o.color = v.color;
@@ -749,8 +756,8 @@
                 clip(isOut.x * isOut.y * isOut.z - 1);
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
-                i.projectorSpacePos *= _MainTex_ST;
-                i.projectorSpacePos.xy += _MainTex_ST.zw;
+                float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
+                i.projectorSpacePos.xy = i.projectorSpacePos.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                 float4 projectorTex = tex2D(_MainTex, i.projectorSpacePos.xy);
                 float alpha = projectorTex.a * step(-dot(lerp(-_ProjectorPos.xyz, _ProjectorPos.xyz - i.localPos, _ProjectorPos.w), i.localNormal), 0);
 
@@ -809,6 +816,7 @@
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4x4, _ProjectorMatrixVP)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _ProjectorPos)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _InstancedMainScaleOffset)
             UNITY_INSTANCING_BUFFER_END(Props)
             struct VertexOutputDeferred_C
             {
@@ -922,8 +930,8 @@
                 clip(isOut.x * isOut.y * isOut.z - 1);
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
-                i.projectorSpacePos *= _MainTex_ST;
-                i.projectorSpacePos.xy += _MainTex_ST.zw;
+                float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
+                i.projectorSpacePos.xy = i.projectorSpacePos.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                 i.tex.xy = i.projectorSpacePos.xy;
 
                 FRAGMENT_SETUP(s)
@@ -1004,6 +1012,7 @@
             UNITY_INSTANCING_BUFFER_START(Props)
                 UNITY_DEFINE_INSTANCED_PROP(float4x4, _ProjectorMatrixVP)
                 UNITY_DEFINE_INSTANCED_PROP(float4, _ProjectorPos)
+                UNITY_DEFINE_INSTANCED_PROP(float4, _InstancedMainScaleOffset)
             UNITY_INSTANCING_BUFFER_END(Props)
 
             struct v2f_meta_c
@@ -1056,8 +1065,8 @@
                 clip(isOut.x * isOut.y * isOut.z - 1);
                 float4 i_ProjectorPos = UNITY_ACCESS_INSTANCED_PROP(Props, _ProjectorPos);
                 clip(dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal) + 0.00001);
-                i.projectorSpacePos *= _MainTex_ST;
-                i.projectorSpacePos.xy += _MainTex_ST.zw;
+                float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
+                i.projectorSpacePos.xy = i.projectorSpacePos.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                 i.uv.xy = i.projectorSpacePos.xy;
 
             #ifdef EDITOR_VISUALIZATION
@@ -1079,5 +1088,5 @@
         
     }
     FallBack "Custom/DecalShader_VRC_VertexLit"
-    CustomEditor "StandardShaderGUI"
+    CustomEditor "ModdedStandardShaderGUI"
 }
