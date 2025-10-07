@@ -50,8 +50,8 @@
 
     SubShader
     {
-        Offset -1, -1
-        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" }
+        Offset -0.1, -0.1
+        Tags { "RenderType"="Cutout" "PerformanceChecks"="False" "IgnoreProjector"="True" }
 
 
         // ------------------------------------------------------------------

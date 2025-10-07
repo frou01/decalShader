@@ -5,7 +5,7 @@ public class ProjectorInput : MonoBehaviour
 {
     [SerializeField, Range(0.0001f, 179)]
     private float _fieldOfView = 60;
-    [SerializeField, Range(0.2f, 5.0f)]
+    [SerializeField]
     private float _aspect = 1.0f;
     [SerializeField, Range(0.0001f, 1000.0f)]
     private float _nearClipPlane = 0.01f;
