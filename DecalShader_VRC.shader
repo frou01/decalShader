@@ -623,7 +623,7 @@
                 float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
                 i.projectorSpacePos.xy = i.projectorSpacePos.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                 float4 projectorTex = tex2D(_MainTex, i.projectorSpacePos.xy);
-                float alpha = projectorTex.a * step(-dot(lerp(-_ProjectorPos.xyz, _ProjectorPos.xyz - i.localPos, _ProjectorPos.w), i.localNormal), 0);
+                float alpha = projectorTex.a * step(-dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal), 0);
 
                 clip(projectorTex.a - _Cutoff);
             }
@@ -759,7 +759,7 @@
                 float4 _MainScaleOffset = UNITY_ACCESS_INSTANCED_PROP(Props, _InstancedMainScaleOffset);
                 i.projectorSpacePos.xy = i.projectorSpacePos.xy * _MainScaleOffset.xy + _MainScaleOffset.zw;
                 float4 projectorTex = tex2D(_MainTex, i.projectorSpacePos.xy);
-                float alpha = projectorTex.a * step(-dot(lerp(-_ProjectorPos.xyz, _ProjectorPos.xyz - i.localPos, _ProjectorPos.w), i.localNormal), 0);
+                float alpha = projectorTex.a * step(-dot(lerp(-i_ProjectorPos.xyz, i_ProjectorPos.xyz - i.localPos, i_ProjectorPos.w), i.localNormal), 0);
 
                 clip(projectorTex.a - _Cutoff);
             }
